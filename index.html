@@ -9,20 +9,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --bg:#13111c;
-    --bg-2:#1b1830;
-    --panel:#211d38;
-    --panel-2:#2a2548;
-    --text:#f4f1ff;
-    --text-soft:#9b95c4;
-    --text-dim:#6f6996;
-    --line:#352f5a;
-    --line-soft:#2c2750;
-    --accent:#ff5c8a;
-    --accent-2:#ffb84d;
-    --urgent:#ff5c5c;
-    --urgent-bg:#3a1f2e;
-    --done:#5fe0a8;
+    --bg:#13111c;--bg-2:#1b1830;--panel:#211d38;--panel-2:#2a2548;
+    --text:#f4f1ff;--text-soft:#9b95c4;--text-dim:#6f6996;
+    --line:#352f5a;--line-soft:#2c2750;
+    --accent:#ff5c8a;--accent-2:#ffb84d;--urgent:#ff5c5c;--urgent-bg:#3a1f2e;--done:#5fe0a8;
     --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
     --pop:'Trebuchet MS','Segoe UI',var(--sans);
   }
@@ -45,27 +35,21 @@
     border-bottom:1px solid var(--line-soft);
   }
   #brand{font-family:var(--pop);font-weight:800;letter-spacing:-.03em;font-size:23px;display:flex;align-items:center;gap:11px;}
-  #brand .logo{
-    width:26px;height:26px;border-radius:8px;position:relative;flex:0 0 auto;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    box-shadow:0 4px 14px rgba(255,92,138,.45);transform:rotate(-6deg);
-  }
+  #brand .logo{width:26px;height:26px;border-radius:8px;position:relative;flex:0 0 auto;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 4px 14px rgba(255,92,138,.45);transform:rotate(-6deg);}
   #brand .logo::after{content:"";position:absolute;inset:5px 5px auto 5px;height:3px;border-radius:3px;background:rgba(255,255,255,.85);box-shadow:0 6px 0 rgba(255,255,255,.55),0 12px 0 rgba(255,255,255,.3);}
   #brand small{font-weight:600;color:var(--text-dim);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;margin-left:2px;}
   .grow{flex:1;}
-  .btn{
-    border:1px solid var(--line);background:var(--panel);color:var(--text);
-    font:inherit;font-size:13px;font-weight:700;padding:9px 14px;border-radius:11px;cursor:pointer;
-    display:inline-flex;align-items:center;gap:7px;transition:transform .08s,background .15s,border-color .15s;
-  }
+  .btn{border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-size:13px;font-weight:700;padding:9px 14px;border-radius:11px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:transform .08s,background .15s,border-color .15s;}
   .btn:hover{background:var(--panel-2);}
   .btn:active{transform:translateY(1px) scale(.98);}
   .btn.primary{background:linear-gradient(135deg,var(--accent),#ff7aa3);border:none;color:#fff;box-shadow:0 4px 16px rgba(255,92,138,.4);}
   .btn.primary:hover{filter:brightness(1.08);}
-  #sync{font-size:11px;color:var(--text-dim);min-width:60px;text-align:right;letter-spacing:.03em;font-weight:600;display:flex;align-items:center;gap:6px;justify-content:flex-end;}
+  #sync{font-size:11px;color:var(--text-dim);min-width:62px;text-align:right;letter-spacing:.03em;font-weight:600;display:flex;align-items:center;gap:6px;justify-content:flex-end;}
   #sync .led{width:7px;height:7px;border-radius:50%;background:var(--text-dim);transition:.2s;}
   #sync.on .led{background:var(--done);box-shadow:0 0 8px var(--done);}
   #sync.busy .led{background:var(--accent-2);box-shadow:0 0 8px var(--accent-2);}
+  #sync.err .led{background:var(--urgent);box-shadow:0 0 8px var(--urgent);}
+  #refresh{width:36px;padding:0;justify-content:center;}
 
   #board{position:absolute;inset:62px 0 0 0;overflow-y:auto;overflow-x:hidden;padding:26px;}
   #board::-webkit-scrollbar{width:10px;}
@@ -76,21 +60,11 @@
   .slot.dragging{opacity:.35;}
   .slot.drop-target .win{box-shadow:0 0 0 2px var(--accent), 0 18px 40px rgba(0,0,0,.5);}
 
-  .win{
-    background:linear-gradient(180deg, var(--panel) 0%, #1d1933 100%);
-    border:1px solid var(--line);border-radius:18px;overflow:hidden;
-    box-shadow:0 14px 34px rgba(0,0,0,.42), 0 1px 0 rgba(255,255,255,.05) inset;
-    display:flex;flex-direction:column;--c:var(--accent);
-    transition:box-shadow .15s,transform .12s;
-  }
+  .win{background:linear-gradient(180deg, var(--panel) 0%, #1d1933 100%);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.42), 0 1px 0 rgba(255,255,255,.05) inset;display:flex;flex-direction:column;--c:var(--accent);transition:box-shadow .15s,transform .12s;}
   .win:hover{transform:translateY(-2px);}
   .win.collapsed .win-body,.win.collapsed .win-add{display:none;}
 
-  .win-head{
-    display:flex;align-items:center;gap:9px;padding:13px 10px 13px 15px;cursor:grab;user-select:none;
-    background:linear-gradient(180deg, color-mix(in srgb, var(--c) 26%, var(--panel)) 0%, transparent 140%);
-    border-bottom:1px solid var(--line-soft);position:relative;
-  }
+  .win-head{display:flex;align-items:center;gap:9px;padding:13px 10px 13px 15px;cursor:grab;user-select:none;background:linear-gradient(180deg, color-mix(in srgb, var(--c) 26%, var(--panel)) 0%, transparent 140%);border-bottom:1px solid var(--line-soft);position:relative;}
   .win-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c);}
   .win-head:active{cursor:grabbing;}
   .grip{display:flex;flex-direction:column;gap:2px;flex:0 0 auto;padding:2px;opacity:.45;}
@@ -147,22 +121,6 @@
   #empty h2{font-family:var(--pop);font-size:25px;color:var(--text);margin:0;font-weight:800;letter-spacing:-.02em;}
   #empty p{margin:0;font-size:14.5px;max-width:330px;line-height:1.55;color:var(--text-soft);}
 
-  #scrim{position:fixed;inset:0;background:rgba(10,8,18,.62);backdrop-filter:blur(5px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
-  #scrim.show{display:flex;}
-  .modal{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;width:350px;max-width:100%;padding:28px;box-shadow:0 30px 70px rgba(0,0,0,.6);}
-  .modal h3{font-family:var(--pop);margin:0 0 5px;font-size:22px;font-weight:800;letter-spacing:-.02em;}
-  .modal p{margin:0 0 18px;font-size:13px;color:var(--text-soft);line-height:1.5;}
-  .modal label{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);display:block;margin:14px 0 6px;}
-  .modal input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:11px;font:inherit;font-size:14px;background:rgba(0,0,0,.25);color:var(--text);}
-  .modal input:focus{outline:none;border-color:var(--accent);}
-  .modal .row{display:flex;gap:10px;margin-top:22px;}
-  .modal .row .btn{flex:1;justify-content:center;padding:12px;}
-  .modal .msg{font-size:12.5px;margin-top:14px;min-height:16px;}
-  .modal .msg.err{color:var(--urgent);}
-  .modal .msg.ok{color:var(--done);}
-  .modal .alt{text-align:center;margin-top:16px;font-size:13px;color:var(--text-soft);}
-  .modal .alt a{color:var(--accent);font-weight:800;cursor:pointer;}
-
   @media (max-width:600px){
     #brand small{display:none;}
     .btn .lbl{display:none;}
@@ -178,8 +136,8 @@
   <div id="brand"><span class="logo"></span>Stacks <small>checklists</small></div>
   <div class="grow"></div>
   <span id="sync"><span class="led"></span><span id="syncTxt">offline</span></span>
+  <button class="btn" id="refresh" title="Pull latest from cloud">⟳</button>
   <button class="btn primary" id="addBtn"><span>＋</span><span class="lbl">New stack</span></button>
-  <button class="btn" id="acctBtn"><span>👤</span><span class="lbl">Sign in</span></button>
 </div>
 
 <div id="board"><div id="grid"></div></div>
@@ -190,34 +148,17 @@
   <p>Groceries, a project, work to-dos, whatever. Flag the things that can't wait and they jump to the top. Drag stacks around to reorder them.</p>
 </div>
 
-<div id="scrim">
-  <div class="modal">
-    <h3 id="mTitle">Sign in</h3>
-    <p id="mSub">Sync your stacks across your phone and computer.</p>
-    <label>Email</label>
-    <input id="mEmail" type="email" autocomplete="email" placeholder="you@email.com">
-    <label>Password</label>
-    <input id="mPass" type="password" autocomplete="current-password" placeholder="••••••••">
-    <div class="row">
-      <button class="btn" id="mCancel">Cancel</button>
-      <button class="btn primary" id="mGo">Sign in</button>
-    </div>
-    <div class="msg" id="mMsg"></div>
-    <div class="alt" id="mAlt">No account? <a id="mSwap">Create one</a></div>
-  </div>
-</div>
-
 <script>
 /* ============ CONFIG ============ */
 const SUPA_URL = "https://ywjtbzxfdudrqsvsslzs.supabase.co";
 const SUPA_KEY = "sb_publishable_Vt5ul1fZGuwxG8zq_ejyNw_kJackpiu";
 const TABLE    = "stacks";
-const LS_KEY   = "stacks_state_v2";
+const DEVICE_ID= "lachlan-personal-stacks"; // single shared row — no login. Change this to a private random string if you like.
+const LS_KEY   = "stacks_state_v3";
 
 /* ============ STATE ============ */
-let sb=null, user=null, dirty=false, saveTimer=null;
+let sb=null, dirty=false, saveTimer=null, loaded=false;
 let state={ stacks:[] };
-let mode="signin";
 
 const PALETTE=["#ff5c8a","#ffb84d","#5fe0a8","#4fc3f7","#a78bfa","#ff8a5c","#f06292","#7ed957"];
 const $=s=>document.querySelector(s);
@@ -226,42 +167,42 @@ const uid=()=>Math.random().toString(36).slice(2,10);
 /* ============ PERSIST ============ */
 function loadLocal(){ try{const r=localStorage.getItem(LS_KEY); if(r)state=JSON.parse(r);}catch(e){} }
 function saveLocal(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
-function markDirty(){ dirty=true; saveLocal(); if(saveTimer)clearTimeout(saveTimer); saveTimer=setTimeout(pushCloud,800); }
+function markDirty(){ dirty=true; saveLocal(); if(saveTimer)clearTimeout(saveTimer); saveTimer=setTimeout(pushCloud,700); }
 
 async function pushCloud(){
-  if(!sb||!user){ setSync("local only","off"); return; }
+  if(!sb){ setSync("local only","off"); return; }
   setSync("saving…","busy");
-  const {error}=await sb.from(TABLE).upsert({user_id:user.id,data:state,updated_at:new Date().toISOString()},{onConflict:"user_id"});
-  if(error){ setSync("save failed","off"); console.error(error); return; }
+  const {error}=await sb.from(TABLE).upsert(
+    {device_id:DEVICE_ID, data:state, updated_at:new Date().toISOString()},
+    {onConflict:"device_id"}
+  );
+  if(error){ setSync("save failed","err"); console.error(error); return; }
   dirty=false; setSync("synced","on");
 }
 async function pullCloud(){
-  if(!sb||!user)return;
+  if(!sb)return;
   setSync("loading…","busy");
-  const {data,error}=await sb.from(TABLE).select("data").eq("user_id",user.id).maybeSingle();
-  if(error){ setSync("load failed","off"); console.error(error); return; }
-  if(data&&data.data){ state=data.data; saveLocal(); render(); } else { await pushCloud(); }
-  setSync("synced","on");
+  const {data,error}=await sb.from(TABLE).select("data").eq("device_id",DEVICE_ID).maybeSingle();
+  if(error){ setSync("load failed","err"); console.error(error); return; }
+  if(data&&data.data){ state=data.data; saveLocal(); render(); }
+  else { await pushCloud(); } // first run: create the row
+  loaded=true; setSync("synced","on");
 }
 function setSync(txt,cls){ $("#syncTxt").textContent=txt; const e=$("#sync"); e.className=""; if(cls&&cls!=="off")e.classList.add(cls); }
 
 /* ============ SUPABASE ============ */
 function initSupa(){
   if(SUPA_KEY.startsWith("REPLACE")){ setSync("local only","off"); return; }
-  try{
-    sb=supabase.createClient(SUPA_URL,SUPA_KEY);
-    sb.auth.getSession().then(({data})=>{ if(data.session){ user=data.session.user; afterLogin(); } });
-    sb.auth.onAuthStateChange((_e,s)=>{ user=s?s.user:null; });
-  }catch(e){ console.error(e); }
+  try{ sb=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:false}}); pullCloud(); }
+  catch(e){ console.error(e); setSync("local only","off"); }
 }
-async function afterLogin(){ $("#acctBtn").innerHTML='<span>✓</span><span class="lbl">'+user.email.split("@")[0]+'</span>'; await pullCloud(); }
 
 /* ============ RENDER ============ */
 const grid=$("#grid");
 function render(){
   grid.innerHTML="";
   $("#empty").style.display=state.stacks.length?"none":"flex";
-  state.stacks.forEach((s,i)=>grid.appendChild(buildSlot(s,i)));
+  state.stacks.forEach(s=>grid.appendChild(buildSlot(s)));
   const ac=document.createElement("div");
   ac.className="addcard";
   ac.innerHTML='<div class="big">＋</div><div>New stack</div>';
@@ -393,40 +334,11 @@ function newStack(){
   if(t){ t.focus(); t.select(); t.scrollIntoView({behavior:"smooth",block:"center"}); }
 }
 
-/* ============ AUTH ============ */
-function openModal(){
-  if(SUPA_KEY.startsWith("REPLACE")){ alert("Add your Supabase anon key in the file's CONFIG section to turn on sync."); return; }
-  if(user){ if(confirm("Sign out? Your stacks stay on this device.")){ sb.auth.signOut(); user=null; $("#acctBtn").innerHTML='<span>👤</span><span class="lbl">Sign in</span>'; setSync("local only","off"); } return; }
-  $("#scrim").classList.add("show"); $("#mMsg").textContent=""; $("#mEmail").focus();
-}
-function setMode(m){
-  mode=m;
-  $("#mTitle").textContent=m==="signin"?"Sign in":"Create account";
-  $("#mGo").textContent=m==="signin"?"Sign in":"Create account";
-  $("#mSub").textContent=m==="signin"?"Sync your stacks across your phone and computer.":"You'll use this to sign in everywhere else.";
-  $("#mAlt").innerHTML=m==="signin"?'No account? <a id="mSwap">Create one</a>':'Have an account? <a id="mSwap">Sign in</a>';
-  $("#mSwap").addEventListener("click",()=>setMode(m==="signin"?"signup":"signin"));
-}
-async function doAuth(){
-  const email=$("#mEmail").value.trim(),pass=$("#mPass").value,msg=$("#mMsg"); msg.className="msg";
-  if(!email||!pass){msg.textContent="Enter an email and password.";msg.classList.add("err");return;}
-  $("#mGo").disabled=true; msg.textContent="Working…";
-  let res; if(mode==="signin")res=await sb.auth.signInWithPassword({email,password:pass}); else res=await sb.auth.signUp({email,password:pass});
-  $("#mGo").disabled=false;
-  if(res.error){msg.textContent=res.error.message;msg.classList.add("err");return;}
-  if(mode==="signup"&&!res.data.session){msg.textContent="Account made. Confirm via email, then sign in.";msg.classList.add("ok");setMode("signin");return;}
-  user=res.data.user; $("#scrim").classList.remove("show"); await afterLogin();
-}
-
 /* ============ BOOT ============ */
 $("#addBtn").addEventListener("click",newStack);
-$("#acctBtn").addEventListener("click",openModal);
-$("#mCancel").addEventListener("click",()=>$("#scrim").classList.remove("show"));
-$("#mGo").addEventListener("click",doAuth);
-$("#mPass").addEventListener("keydown",e=>{if(e.key==="Enter")doAuth();});
-$("#scrim").addEventListener("mousedown",e=>{if(e.target.id==="scrim")$("#scrim").classList.remove("show");});
+$("#refresh").addEventListener("click",()=>pullCloud());
 
-loadLocal(); setMode("signin"); render(); initSupa();
+loadLocal(); render(); initSupa();
 </script>
 </body>
 </html>
