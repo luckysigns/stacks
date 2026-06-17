@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Stacks</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#13111c;
+    --bg-2:#1b1830;
+    --panel:#211d38;
+    --panel-2:#2a2548;
+    --text:#f4f1ff;
+    --text-soft:#9b95c4;
+    --text-dim:#6f6996;
+    --line:#352f5a;
+    --line-soft:#2c2750;
+    --accent:#ff5c8a;
+    --accent-2:#ffb84d;
+    --urgent:#ff5c5c;
+    --urgent-bg:#3a1f2e;
+    --done:#5fe0a8;
+    --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
+    --pop:'Trebuchet MS','Segoe UI',var(--sans);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;}
+  body{
+    font-family:var(--sans);color:var(--text);
+    background:
+      radial-gradient(900px 500px at 12% -5%, #2a1f4d 0%, transparent 55%),
+      radial-gradient(800px 600px at 95% 10%, #3a1d3f 0%, transparent 50%),
+      radial-gradient(700px 700px at 50% 120%, #1d2a44 0%, transparent 55%),
+      var(--bg);
+    background-attachment:fixed;
+  }
+
+  #bar{
+    position:fixed;top:0;left:0;right:0;height:62px;z-index:60;
+    display:flex;align-items:center;gap:14px;padding:0 20px;
+    background:rgba(19,17,28,.72);backdrop-filter:blur(16px) saturate(140%);
+    border-bottom:1px solid var(--line-soft);
+  }
+  #brand{font-family:var(--pop);font-weight:800;letter-spacing:-.03em;font-size:23px;display:flex;align-items:center;gap:11px;}
+  #brand .logo{
+    width:26px;height:26px;border-radius:8px;position:relative;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    box-shadow:0 4px 14px rgba(255,92,138,.45);transform:rotate(-6deg);
+  }
+  #brand .logo::after{content:"";position:absolute;inset:5px 5px auto 5px;height:3px;border-radius:3px;background:rgba(255,255,255,.85);box-shadow:0 6px 0 rgba(255,255,255,.55),0 12px 0 rgba(255,255,255,.3);}
+  #brand small{font-weight:600;color:var(--text-dim);font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;margin-left:2px;}
+  .grow{flex:1;}
+  .btn{
+    border:1px solid var(--line);background:var(--panel);color:var(--text);
+    font:inherit;font-size:13px;font-weight:700;padding:9px 14px;border-radius:11px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;transition:transform .08s,background .15s,border-color .15s;
+  }
+  .btn:hover{background:var(--panel-2);}
+  .btn:active{transform:translateY(1px) scale(.98);}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),#ff7aa3);border:none;color:#fff;box-shadow:0 4px 16px rgba(255,92,138,.4);}
+  .btn.primary:hover{filter:brightness(1.08);}
+  #sync{font-size:11px;color:var(--text-dim);min-width:60px;text-align:right;letter-spacing:.03em;font-weight:600;display:flex;align-items:center;gap:6px;justify-content:flex-end;}
+  #sync .led{width:7px;height:7px;border-radius:50%;background:var(--text-dim);transition:.2s;}
+  #sync.on .led{background:var(--done);box-shadow:0 0 8px var(--done);}
+  #sync.busy .led{background:var(--accent-2);box-shadow:0 0 8px var(--accent-2);}
+
+  #board{position:absolute;inset:62px 0 0 0;overflow-y:auto;overflow-x:hidden;padding:26px;}
+  #board::-webkit-scrollbar{width:10px;}
+  #board::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
+
+  #grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(290px, 1fr));gap:20px;align-items:start;max-width:1500px;margin:0 auto;}
+  .slot{min-width:0;}
+  .slot.dragging{opacity:.35;}
+  .slot.drop-target .win{box-shadow:0 0 0 2px var(--accent), 0 18px 40px rgba(0,0,0,.5);}
+
+  .win{
+    background:linear-gradient(180deg, var(--panel) 0%, #1d1933 100%);
+    border:1px solid var(--line);border-radius:18px;overflow:hidden;
+    box-shadow:0 14px 34px rgba(0,0,0,.42), 0 1px 0 rgba(255,255,255,.05) inset;
+    display:flex;flex-direction:column;--c:var(--accent);
+    transition:box-shadow .15s,transform .12s;
+  }
+  .win:hover{transform:translateY(-2px);}
+  .win.collapsed .win-body,.win.collapsed .win-add{display:none;}
+
+  .win-head{
+    display:flex;align-items:center;gap:9px;padding:13px 10px 13px 15px;cursor:grab;user-select:none;
+    background:linear-gradient(180deg, color-mix(in srgb, var(--c) 26%, var(--panel)) 0%, transparent 140%);
+    border-bottom:1px solid var(--line-soft);position:relative;
+  }
+  .win-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c);}
+  .win-head:active{cursor:grabbing;}
+  .grip{display:flex;flex-direction:column;gap:2px;flex:0 0 auto;padding:2px;opacity:.45;}
+  .grip span{width:11px;height:2px;border-radius:2px;background:var(--text-soft);}
+  .swatch{width:15px;height:15px;border-radius:5px;flex:0 0 auto;background:var(--c);cursor:pointer;box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 30%,transparent);}
+  .win-title{flex:1;font-family:var(--pop);font-weight:800;font-size:15.5px;letter-spacing:-.01em;background:none;border:none;color:var(--text);padding:3px 4px;min-width:0;border-radius:6px;}
+  .win-title:focus{outline:none;background:rgba(255,255,255,.07);}
+  .win-count{font-size:11px;color:var(--c);font-weight:800;background:color-mix(in srgb,var(--c) 16%,transparent);padding:3px 9px;border-radius:20px;flex:0 0 auto;}
+  .ic{width:28px;height:28px;border:none;background:transparent;border-radius:8px;cursor:pointer;color:var(--text-dim);font-size:15px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;transition:.12s;}
+  .ic:hover{background:rgba(255,255,255,.08);color:var(--text);}
+
+  .win-body{padding:6px 0 2px;}
+  .sect{padding:5px 14px 3px;}
+  .sect-label{font-size:9.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);display:flex;align-items:center;gap:8px;margin:4px 0 5px;}
+  .sect.urgent .sect-label{color:var(--urgent);}
+  .sect-label .bar{height:1px;flex:1;background:var(--line-soft);}
+
+  .item{display:flex;align-items:flex-start;gap:10px;padding:8px;border-radius:11px;cursor:pointer;transition:background .12s;}
+  .item:hover{background:rgba(255,255,255,.05);}
+  .item.urgent{background:var(--urgent-bg);}
+  .item.urgent:hover{background:#48273a;}
+  .box{width:20px;height:20px;border:2px solid var(--text-dim);border-radius:7px;flex:0 0 auto;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .14s;}
+  .item.urgent .box{border-color:var(--urgent);}
+  .box svg{width:12px;height:12px;opacity:0;transform:scale(.4) rotate(-15deg);transition:all .18s cubic-bezier(.2,1.6,.4,1);}
+  .item.done .box{background:linear-gradient(135deg,#5fe0a8,#39c98a);border-color:var(--done);box-shadow:0 0 12px rgba(95,224,168,.4);}
+  .item.done .box svg{opacity:1;transform:scale(1) rotate(0);stroke:#0c2a1e;}
+  .item-text{flex:1;font-size:14px;line-height:1.4;background:none;border:none;color:var(--text);font-family:inherit;padding:1px 0;resize:none;min-width:0;word-break:break-word;overflow:hidden;}
+  .item-text:focus{outline:none;}
+  .item-text::placeholder{color:var(--text-dim);}
+  .item.done .item-text{text-decoration:line-through;color:var(--text-dim);}
+  .flag{width:24px;height:24px;border:none;background:none;cursor:pointer;font-size:13px;flex:0 0 auto;margin-top:1px;color:var(--line);transition:.12s;}
+  .item:hover .flag{color:var(--text-dim);}
+  .item.urgent .flag,.item.urgent:hover .flag{color:var(--urgent);}
+  .item-x{opacity:0;width:24px;height:24px;font-size:13px;}
+  .item:hover .item-x{opacity:.7;}
+  .item-x:hover{opacity:1;}
+
+  .win-add{display:flex;align-items:center;border-top:1px solid var(--line-soft);background:rgba(0,0,0,.18);}
+  .win-add .plus{padding:0 4px 0 15px;color:var(--c);font-size:18px;font-weight:700;}
+  .win-add input{flex:1;border:none;background:none;font:inherit;font-size:13.5px;padding:13px 14px 13px 6px;color:var(--text);}
+  .win-add input:focus{outline:none;}
+  .win-add input::placeholder{color:var(--text-dim);}
+
+  .addcard{border:2px dashed var(--line);border-radius:18px;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--text-dim);cursor:pointer;font-weight:700;font-size:14px;transition:.15s;background:rgba(255,255,255,.015);}
+  .addcard:hover{border-color:var(--accent);color:var(--accent);background:rgba(255,92,138,.05);transform:translateY(-2px);}
+  .addcard .big{font-size:30px;line-height:1;}
+
+  .cmenu{position:fixed;background:var(--panel-2);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.5);padding:10px;z-index:90;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .cmenu .c{width:26px;height:26px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:.1s;}
+  .cmenu .c:hover{transform:scale(1.15);border-color:rgba(255,255,255,.4);}
+
+  #empty{position:absolute;inset:62px 0 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-soft);text-align:center;pointer-events:none;gap:12px;padding:30px;}
+  #empty .blob{width:74px;height:74px;border-radius:22px;background:linear-gradient(135deg,var(--accent),var(--accent-2));transform:rotate(-8deg);box-shadow:0 14px 36px rgba(255,92,138,.4);opacity:.92;}
+  #empty h2{font-family:var(--pop);font-size:25px;color:var(--text);margin:0;font-weight:800;letter-spacing:-.02em;}
+  #empty p{margin:0;font-size:14.5px;max-width:330px;line-height:1.55;color:var(--text-soft);}
+
+  #scrim{position:fixed;inset:0;background:rgba(10,8,18,.62);backdrop-filter:blur(5px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+  #scrim.show{display:flex;}
+  .modal{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;width:350px;max-width:100%;padding:28px;box-shadow:0 30px 70px rgba(0,0,0,.6);}
+  .modal h3{font-family:var(--pop);margin:0 0 5px;font-size:22px;font-weight:800;letter-spacing:-.02em;}
+  .modal p{margin:0 0 18px;font-size:13px;color:var(--text-soft);line-height:1.5;}
+  .modal label{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);display:block;margin:14px 0 6px;}
+  .modal input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:11px;font:inherit;font-size:14px;background:rgba(0,0,0,.25);color:var(--text);}
+  .modal input:focus{outline:none;border-color:var(--accent);}
+  .modal .row{display:flex;gap:10px;margin-top:22px;}
+  .modal .row .btn{flex:1;justify-content:center;padding:12px;}
+  .modal .msg{font-size:12.5px;margin-top:14px;min-height:16px;}
+  .modal .msg.err{color:var(--urgent);}
+  .modal .msg.ok{color:var(--done);}
+  .modal .alt{text-align:center;margin-top:16px;font-size:13px;color:var(--text-soft);}
+  .modal .alt a{color:var(--accent);font-weight:800;cursor:pointer;}
+
+  @media (max-width:600px){
+    #brand small{display:none;}
+    .btn .lbl{display:none;}
+    .btn{padding:10px 12px;}
+    #board{padding:16px;}
+    #grid{grid-template-columns:1fr;gap:16px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="bar">
+  <div id="brand"><span class="logo"></span>Stacks <small>checklists</small></div>
+  <div class="grow"></div>
+  <span id="sync"><span class="led"></span><span id="syncTxt">offline</span></span>
+  <button class="btn primary" id="addBtn"><span>＋</span><span class="lbl">New stack</span></button>
+  <button class="btn" id="acctBtn"><span>👤</span><span class="lbl">Sign in</span></button>
+</div>
+
+<div id="board"><div id="grid"></div></div>
+
+<div id="empty">
+  <div class="blob"></div>
+  <h2>Start a stack</h2>
+  <p>Groceries, a project, work to-dos, whatever. Flag the things that can't wait and they jump to the top. Drag stacks around to reorder them.</p>
+</div>
+
+<div id="scrim">
+  <div class="modal">
+    <h3 id="mTitle">Sign in</h3>
+    <p id="mSub">Sync your stacks across your phone and computer.</p>
+    <label>Email</label>
+    <input id="mEmail" type="email" autocomplete="email" placeholder="you@email.com">
+    <label>Password</label>
+    <input id="mPass" type="password" autocomplete="current-password" placeholder="••••••••">
+    <div class="row">
+      <button class="btn" id="mCancel">Cancel</button>
+      <button class="btn primary" id="mGo">Sign in</button>
+    </div>
+    <div class="msg" id="mMsg"></div>
+    <div class="alt" id="mAlt">No account? <a id="mSwap">Create one</a></div>
+  </div>
+</div>
+
+<script>
+/* ============ CONFIG ============ */
+const SUPA_URL = "https://ywjtbzxfdudrqsvsslzs.supabase.co";
+const SUPA_KEY = "sb_publishable_Vt5ul1fZGuwxG8zq_ejyNw_kJackpiu";
+const TABLE    = "stacks";
+const LS_KEY   = "stacks_state_v2";
+
+/* ============ STATE ============ */
+let sb=null, user=null, dirty=false, saveTimer=null;
+let state={ stacks:[] };
+let mode="signin";
+
+const PALETTE=["#ff5c8a","#ffb84d","#5fe0a8","#4fc3f7","#a78bfa","#ff8a5c","#f06292","#7ed957"];
+const $=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,10);
+
+/* ============ PERSIST ============ */
+function loadLocal(){ try{const r=localStorage.getItem(LS_KEY); if(r)state=JSON.parse(r);}catch(e){} }
+function saveLocal(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+function markDirty(){ dirty=true; saveLocal(); if(saveTimer)clearTimeout(saveTimer); saveTimer=setTimeout(pushCloud,800); }
+
+async function pushCloud(){
+  if(!sb||!user){ setSync("local only","off"); return; }
+  setSync("saving…","busy");
+  const {error}=await sb.from(TABLE).upsert({user_id:user.id,data:state,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+  if(error){ setSync("save failed","off"); console.error(error); return; }
+  dirty=false; setSync("synced","on");
+}
+async function pullCloud(){
+  if(!sb||!user)return;
+  setSync("loading…","busy");
+  const {data,error}=await sb.from(TABLE).select("data").eq("user_id",user.id).maybeSingle();
+  if(error){ setSync("load failed","off"); console.error(error); return; }
+  if(data&&data.data){ state=data.data; saveLocal(); render(); } else { await pushCloud(); }
+  setSync("synced","on");
+}
+function setSync(txt,cls){ $("#syncTxt").textContent=txt; const e=$("#sync"); e.className=""; if(cls&&cls!=="off")e.classList.add(cls); }
+
+/* ============ SUPABASE ============ */
+function initSupa(){
+  if(SUPA_KEY.startsWith("REPLACE")){ setSync("local only","off"); return; }
+  try{
+    sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+    sb.auth.getSession().then(({data})=>{ if(data.session){ user=data.session.user; afterLogin(); } });
+    sb.auth.onAuthStateChange((_e,s)=>{ user=s?s.user:null; });
+  }catch(e){ console.error(e); }
+}
+async function afterLogin(){ $("#acctBtn").innerHTML='<span>✓</span><span class="lbl">'+user.email.split("@")[0]+'</span>'; await pullCloud(); }
+
+/* ============ RENDER ============ */
+const grid=$("#grid");
+function render(){
+  grid.innerHTML="";
+  $("#empty").style.display=state.stacks.length?"none":"flex";
+  state.stacks.forEach((s,i)=>grid.appendChild(buildSlot(s,i)));
+  const ac=document.createElement("div");
+  ac.className="addcard";
+  ac.innerHTML='<div class="big">＋</div><div>New stack</div>';
+  ac.addEventListener("click",newStack);
+  grid.appendChild(ac);
+}
+
+function buildSlot(s){
+  const slot=document.createElement("div");
+  slot.className="slot"; slot.dataset.id=s.id; slot.draggable=false;
+  const win=document.createElement("div");
+  win.className="win"+(s.collapsed?" collapsed":"");
+  win.style.setProperty("--c",s.color);
+  const total=s.items.length, done=s.items.filter(i=>i.done).length;
+
+  const head=document.createElement("div");
+  head.className="win-head";
+  head.innerHTML='<span class="grip"><span></span><span></span><span></span></span>'
+    +'<span class="swatch"></span>'
+    +'<input class="win-title" spellcheck="false">'
+    +'<span class="win-count">'+done+'/'+total+'</span>'
+    +'<button class="ic j-col" title="Collapse">'+(s.collapsed?"▸":"▾")+'</button>'
+    +'<button class="ic j-del" title="Delete stack">✕</button>';
+  head.querySelector(".win-title").value=s.title;
+  win.appendChild(head);
+
+  const body=document.createElement("div");
+  body.className="win-body";
+  const urgent=s.items.filter(i=>i.urgent), normal=s.items.filter(i=>!i.urgent);
+  if(urgent.length) body.appendChild(section('⚡ Urgent',urgent,s,true));
+  if(normal.length||!urgent.length) body.appendChild(section(urgent.length?"Later":"Items",normal,s,false));
+  win.appendChild(body);
+
+  const add=document.createElement("div");
+  add.className="win-add";
+  add.innerHTML='<span class="plus">＋</span><input placeholder="Add an item…" spellcheck="false">';
+  win.appendChild(add);
+
+  slot.appendChild(win);
+  wire(slot,win,s,head,body,add);
+  return slot;
+}
+
+function section(label,items,s,isUrgent){
+  const sec=document.createElement("div");
+  sec.className="sect"+(isUrgent?" urgent":"");
+  sec.innerHTML='<div class="sect-label">'+label+'<span class="bar"></span></div>';
+  items.forEach(it=>sec.appendChild(itemEl(it,s)));
+  return sec;
+}
+
+function itemEl(it,s){
+  const el=document.createElement("div");
+  el.className="item"+(it.done?" done":"")+(it.urgent?" urgent":"");
+  el.innerHTML='<span class="box"><svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>'
+    +'<textarea class="item-text" rows="1" placeholder="Item"></textarea>'
+    +'<button class="flag" title="Flag urgent">⚑</button>'
+    +'<button class="ic item-x" title="Delete">✕</button>';
+  const ta=el.querySelector(".item-text");
+  ta.value=it.text||"";
+  requestAnimationFrame(()=>grow(ta));
+  el.querySelector(".box").addEventListener("click",e=>{e.stopPropagation();toggle(it,el,s);});
+  el.addEventListener("click",e=>{ if(e.target.closest(".item-text,.flag,.item-x,.box"))return; toggle(it,el,s); });
+  el.querySelector(".flag").addEventListener("click",e=>{e.stopPropagation();it.urgent=!it.urgent;markDirty();render();});
+  el.querySelector(".item-x").addEventListener("click",e=>{e.stopPropagation();s.items=s.items.filter(x=>x.id!==it.id);markDirty();render();});
+  ta.addEventListener("input",()=>{it.text=ta.value;grow(ta);markDirty();});
+  ta.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();ta.blur();}});
+  return el;
+}
+function toggle(it,el,s){ it.done=!it.done; el.classList.toggle("done"); count(s); markDirty(); }
+function grow(ta){ ta.style.height="auto"; ta.style.height=ta.scrollHeight+"px"; }
+function count(s){ const slot=grid.querySelector('.slot[data-id="'+s.id+'"]'); if(slot){const t=s.items.length,d=s.items.filter(i=>i.done).length; slot.querySelector(".win-count").textContent=d+"/"+t;} }
+
+/* ============ WIRING ============ */
+function wire(slot,win,s,head,body,add){
+  const title=head.querySelector(".win-title");
+  title.addEventListener("input",()=>{s.title=title.value;markDirty();});
+  title.addEventListener("mousedown",e=>e.stopPropagation());
+  head.querySelector(".swatch").addEventListener("click",e=>{e.stopPropagation();colorMenu(e.currentTarget,s);});
+  head.querySelector(".j-col").addEventListener("click",e=>{e.stopPropagation();s.collapsed=!s.collapsed;markDirty();render();});
+  head.querySelector(".j-del").addEventListener("click",e=>{e.stopPropagation();if(confirm('Delete "'+(s.title||"this stack")+'"?')){state.stacks=state.stacks.filter(x=>x.id!==s.id);markDirty();render();}});
+
+  const inp=add.querySelector("input");
+  const commit=()=>{const v=inp.value.trim();if(v){s.items.push({id:uid(),text:v,done:false,urgent:false});inp.value="";markDirty();render();const w=grid.querySelector('.slot[data-id="'+s.id+'"] .win-add input');if(w)w.focus();}};
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter")commit();});
+  add.addEventListener("mousedown",e=>e.stopPropagation());
+
+  enableDragReorder(slot,head,s);
+}
+
+let dragId=null;
+function enableDragReorder(slot,head,s){
+  head.addEventListener("mousedown",e=>{ if(e.target.closest("input,button,.swatch"))return; slot.draggable=true; });
+  head.addEventListener("touchstart",()=>{ slot.draggable=true; },{passive:true});
+  slot.addEventListener("dragstart",e=>{ dragId=s.id; slot.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; try{e.dataTransfer.setData("text/plain",s.id);}catch(_){} });
+  slot.addEventListener("dragend",()=>{ slot.classList.remove("dragging"); slot.draggable=false; dragId=null; grid.querySelectorAll(".drop-target").forEach(x=>x.classList.remove("drop-target")); });
+  slot.addEventListener("dragover",e=>{ if(!dragId||dragId===s.id)return; e.preventDefault(); slot.classList.add("drop-target"); });
+  slot.addEventListener("dragleave",()=>slot.classList.remove("drop-target"));
+  slot.addEventListener("drop",e=>{ e.preventDefault(); slot.classList.remove("drop-target"); reorder(dragId,s.id); });
+}
+function reorder(fromId,toId){
+  if(!fromId||fromId===toId)return;
+  const arr=state.stacks, fi=arr.findIndex(x=>x.id===fromId), ti=arr.findIndex(x=>x.id===toId);
+  if(fi<0||ti<0)return;
+  const [m]=arr.splice(fi,1); arr.splice(ti,0,m);
+  markDirty(); render();
+}
+
+/* ============ COLOR MENU ============ */
+let cmenu=null;
+function colorMenu(anchor,s){
+  closeMenu();
+  cmenu=document.createElement("div"); cmenu.className="cmenu";
+  PALETTE.forEach(c=>{ const b=document.createElement("div"); b.className="c"; b.style.background=c; b.addEventListener("click",()=>{s.color=c;markDirty();closeMenu();render();}); cmenu.appendChild(b); });
+  document.body.appendChild(cmenu);
+  const r=anchor.getBoundingClientRect();
+  cmenu.style.left=Math.min(r.left,window.innerWidth-150)+"px"; cmenu.style.top=(r.bottom+6)+"px";
+  setTimeout(()=>document.addEventListener("mousedown",outMenu),0);
+}
+function outMenu(e){ if(cmenu&&!cmenu.contains(e.target))closeMenu(); }
+function closeMenu(){ if(cmenu){cmenu.remove();cmenu=null;document.removeEventListener("mousedown",outMenu);} }
+
+/* ============ NEW STACK ============ */
+function newStack(){
+  const n=state.stacks.length;
+  const s={id:uid(),title:"Untitled stack",color:PALETTE[n%PALETTE.length],collapsed:false,items:[]};
+  state.stacks.push(s); markDirty(); render();
+  const t=grid.querySelector('.slot[data-id="'+s.id+'"] .win-title');
+  if(t){ t.focus(); t.select(); t.scrollIntoView({behavior:"smooth",block:"center"}); }
+}
+
+/* ============ AUTH ============ */
+function openModal(){
+  if(SUPA_KEY.startsWith("REPLACE")){ alert("Add your Supabase anon key in the file's CONFIG section to turn on sync."); return; }
+  if(user){ if(confirm("Sign out? Your stacks stay on this device.")){ sb.auth.signOut(); user=null; $("#acctBtn").innerHTML='<span>👤</span><span class="lbl">Sign in</span>'; setSync("local only","off"); } return; }
+  $("#scrim").classList.add("show"); $("#mMsg").textContent=""; $("#mEmail").focus();
+}
+function setMode(m){
+  mode=m;
+  $("#mTitle").textContent=m==="signin"?"Sign in":"Create account";
+  $("#mGo").textContent=m==="signin"?"Sign in":"Create account";
+  $("#mSub").textContent=m==="signin"?"Sync your stacks across your phone and computer.":"You'll use this to sign in everywhere else.";
+  $("#mAlt").innerHTML=m==="signin"?'No account? <a id="mSwap">Create one</a>':'Have an account? <a id="mSwap">Sign in</a>';
+  $("#mSwap").addEventListener("click",()=>setMode(m==="signin"?"signup":"signin"));
+}
+async function doAuth(){
+  const email=$("#mEmail").value.trim(),pass=$("#mPass").value,msg=$("#mMsg"); msg.className="msg";
+  if(!email||!pass){msg.textContent="Enter an email and password.";msg.classList.add("err");return;}
+  $("#mGo").disabled=true; msg.textContent="Working…";
+  let res; if(mode==="signin")res=await sb.auth.signInWithPassword({email,password:pass}); else res=await sb.auth.signUp({email,password:pass});
+  $("#mGo").disabled=false;
+  if(res.error){msg.textContent=res.error.message;msg.classList.add("err");return;}
+  if(mode==="signup"&&!res.data.session){msg.textContent="Account made. Confirm via email, then sign in.";msg.classList.add("ok");setMode("signin");return;}
+  user=res.data.user; $("#scrim").classList.remove("show"); await afterLogin();
+}
+
+/* ============ BOOT ============ */
+$("#addBtn").addEventListener("click",newStack);
+$("#acctBtn").addEventListener("click",openModal);
+$("#mCancel").addEventListener("click",()=>$("#scrim").classList.remove("show"));
+$("#mGo").addEventListener("click",doAuth);
+$("#mPass").addEventListener("keydown",e=>{if(e.key==="Enter")doAuth();});
+$("#scrim").addEventListener("mousedown",e=>{if(e.target.id==="scrim")$("#scrim").classList.remove("show");});
+
+loadLocal(); setMode("signin"); render(); initSupa();
+</script>
+</body>
+</html>
