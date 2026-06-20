@@ -116,10 +116,84 @@
   .cmenu .c{width:26px;height:26px;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:.1s;}
   .cmenu .c:hover{transform:scale(1.15);border-color:rgba(255,255,255,.4);}
 
+  /* archive button on item */
+  .arch{opacity:0;width:24px;height:24px;font-size:13px;}
+  .item:hover .arch{opacity:.7;}
+  .arch:hover{opacity:1;}
+
+  /* "archive checked" mini-button in stack footer area */
+  .win-tools{display:flex;justify-content:flex-end;padding:2px 10px 6px;}
+  .archbtn{border:none;background:none;color:var(--text-dim);font:inherit;font-size:11px;font-weight:700;cursor:pointer;padding:5px 9px;border-radius:8px;display:inline-flex;align-items:center;gap:5px;transition:.12s;}
+  .archbtn:hover{background:rgba(255,255,255,.06);color:var(--done);}
+  .archbtn[disabled]{opacity:.35;cursor:default;}
+  .archbtn[disabled]:hover{background:none;color:var(--text-dim);}
+
+  /* bottom archive bar */
+  #archbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:55;display:flex;justify-content:center;pointer-events:none;
+  }
+  #archbar button{
+    pointer-events:auto;margin-bottom:18px;border:1px solid var(--line);
+    background:rgba(33,29,56,.92);backdrop-filter:blur(14px);color:var(--text-soft);
+    font:inherit;font-size:13px;font-weight:700;padding:11px 18px;border-radius:14px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:9px;box-shadow:0 10px 30px rgba(0,0,0,.45);transition:.15s;
+  }
+  #archbar button:hover{color:var(--text);border-color:var(--accent);transform:translateY(-2px);}
+  #archbar .pill{font-size:11px;font-weight:800;background:var(--accent);color:#fff;border-radius:20px;padding:2px 8px;}
+
+  /* archive drawer */
+  #drawer-scrim{position:fixed;inset:0;background:rgba(10,8,18,.55);backdrop-filter:blur(4px);z-index:110;display:none;}
+  #drawer-scrim.show{display:block;}
+  #drawer{
+    position:fixed;left:0;right:0;bottom:0;z-index:111;max-height:72vh;
+    background:linear-gradient(180deg,var(--panel-2),var(--panel));
+    border-top:1px solid var(--line);border-radius:22px 22px 0 0;
+    box-shadow:0 -16px 50px rgba(0,0,0,.55);transform:translateY(100%);transition:transform .26s cubic-bezier(.3,.9,.3,1);
+    display:flex;flex-direction:column;
+  }
+  #drawer.show{transform:translateY(0);}
+  .draw-head{display:flex;align-items:center;gap:12px;padding:16px 20px 12px;border-bottom:1px solid var(--line-soft);}
+  .draw-head .grab{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:42px;height:4px;border-radius:4px;background:var(--line);}
+  .draw-head h3{font-family:var(--pop);margin:0;font-size:19px;font-weight:800;letter-spacing:-.02em;display:flex;align-items:center;gap:9px;}
+  .draw-head .count{font-size:11px;font-weight:800;color:var(--accent-2);background:color-mix(in srgb,var(--accent-2) 16%,transparent);padding:3px 9px;border-radius:20px;}
+  .draw-clear{border:none;background:none;color:var(--text-dim);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:6px 10px;border-radius:8px;}
+  .draw-clear:hover{color:var(--urgent);background:rgba(255,92,92,.08);}
+  .draw-body{overflow-y:auto;padding:8px 14px 26px;}
+  .draw-body::-webkit-scrollbar{width:9px;}
+  .draw-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px;}
+  .arch-group{margin:10px 4px 4px;}
+  .arch-group-label{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);display:flex;align-items:center;gap:8px;margin-bottom:5px;padding-left:4px;}
+  .arch-group-label .dot{width:9px;height:9px;border-radius:3px;}
+  .arch-row{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;background:rgba(255,255,255,.03);margin-bottom:6px;}
+  .arch-row .txt{flex:1;font-size:14px;color:var(--text-soft);min-width:0;word-break:break-word;}
+  .arch-row .restore{border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:6px 11px;border-radius:9px;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;transition:.12s;}
+  .arch-row .restore:hover{border-color:var(--done);color:var(--done);}
+  .arch-row .del{border:none;background:none;color:var(--text-dim);cursor:pointer;font-size:13px;width:26px;height:26px;border-radius:8px;flex:0 0 auto;}
+  .arch-row .del:hover{color:var(--urgent);background:rgba(255,92,92,.08);}
+  .draw-empty{text-align:center;color:var(--text-dim);padding:40px 20px;font-size:14px;}
+
   #empty{position:absolute;inset:62px 0 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text-soft);text-align:center;pointer-events:none;gap:12px;padding:30px;}
   #empty .blob{width:74px;height:74px;border-radius:22px;background:linear-gradient(135deg,var(--accent),var(--accent-2));transform:rotate(-8deg);box-shadow:0 14px 36px rgba(255,92,138,.4);opacity:.92;}
   #empty h2{font-family:var(--pop);font-size:25px;color:var(--text);margin:0;font-weight:800;letter-spacing:-.02em;}
   #empty p{margin:0;font-size:14.5px;max-width:330px;line-height:1.55;color:var(--text-soft);}
+
+  #authScrim{position:fixed;inset:0;background:rgba(10,8,18,.66);backdrop-filter:blur(6px);z-index:120;display:none;align-items:center;justify-content:center;padding:20px;}
+  #authScrim.show{display:flex;}
+  .auth-modal{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:22px;width:360px;max-width:100%;padding:30px;box-shadow:0 30px 70px rgba(0,0,0,.6);}
+  .auth-logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent-2));transform:rotate(-6deg);box-shadow:0 8px 22px rgba(255,92,138,.45);margin-bottom:16px;position:relative;}
+  .auth-logo::after{content:"";position:absolute;inset:9px 9px auto 9px;height:4px;border-radius:4px;background:rgba(255,255,255,.9);box-shadow:0 9px 0 rgba(255,255,255,.6),0 18px 0 rgba(255,255,255,.35);}
+  .auth-modal h3{font-family:var(--pop);margin:0 0 5px;font-size:23px;font-weight:800;letter-spacing:-.02em;}
+  .auth-modal p{margin:0 0 8px;font-size:13px;color:var(--text-soft);line-height:1.5;}
+  .auth-modal label{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);display:block;margin:15px 0 6px;}
+  .auth-modal input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:11px;font:inherit;font-size:14px;background:rgba(0,0,0,.25);color:var(--text);}
+  .auth-modal input:focus{outline:none;border-color:var(--accent);}
+  .auth-modal .row{display:flex;gap:10px;margin-top:22px;}
+  .auth-modal .row .btn{flex:1;justify-content:center;padding:12px;}
+  .auth-modal .msg{font-size:12.5px;margin-top:14px;min-height:16px;}
+  .auth-modal .msg.err{color:var(--urgent);}
+  .auth-modal .msg.ok{color:var(--done);}
+  .auth-modal .alt{text-align:center;margin-top:16px;font-size:13px;color:var(--text-soft);}
+  .auth-modal .alt a{color:var(--accent);font-weight:800;cursor:pointer;}
 
   @media (max-width:600px){
     #brand small{display:none;}
@@ -138,6 +212,7 @@
   <span id="sync"><span class="led"></span><span id="syncTxt">offline</span></span>
   <button class="btn" id="refresh" title="Pull latest from cloud">⟳</button>
   <button class="btn primary" id="addBtn"><span>＋</span><span class="lbl">New stack</span></button>
+  <button class="btn" id="acctBtn"><span>👤</span><span class="lbl">Sign in</span></button>
 </div>
 
 <div id="board"><div id="grid"></div></div>
@@ -148,53 +223,123 @@
   <p>Groceries, a project, work to-dos, whatever. Flag the things that can't wait and they jump to the top. Drag stacks around to reorder them.</p>
 </div>
 
+<div id="archbar"><button id="openArch">🗄️ Archive <span class="pill" id="archPill">0</span></button></div>
+
+<div id="drawer-scrim"></div>
+<div id="drawer">
+  <div class="draw-head">
+    <span class="grab"></span>
+    <h3>🗄️ Archive <span class="count" id="drawCount">0</span></h3>
+    <div class="grow"></div>
+    <button class="draw-clear" id="drawClear">Clear all</button>
+    <button class="ic" id="drawClose" title="Close">✕</button>
+  </div>
+  <div class="draw-body" id="drawBody"></div>
+</div>
+
+<div id="authScrim">
+  <div class="auth-modal">
+    <div class="auth-logo"></div>
+    <h3 id="aTitle">Welcome back</h3>
+    <p id="aSub">Sign in to load your stacks on any device.</p>
+    <label>Email</label>
+    <input id="aEmail" type="email" autocomplete="email" placeholder="you@email.com">
+    <label>Password</label>
+    <input id="aPass" type="password" autocomplete="current-password" placeholder="••••••••">
+    <div class="row">
+      <button class="btn" id="aCancel">Cancel</button>
+      <button class="btn primary" id="aGo">Sign in</button>
+    </div>
+    <div class="msg" id="aMsg"></div>
+    <div class="alt" id="aAlt">New here? <a id="aSwap">Create an account</a></div>
+  </div>
+</div>
+
 <script>
 /* ============ CONFIG ============ */
 const SUPA_URL = "https://ywjtbzxfdudrqsvsslzs.supabase.co";
 const SUPA_KEY = "sb_publishable_Vt5ul1fZGuwxG8zq_ejyNw_kJackpiu";
 const TABLE    = "stacks";
-const DEVICE_ID= "lachlan-personal-stacks"; // single shared row — no login. Change this to a private random string if you like.
-const LS_KEY   = "stacks_state_v3";
+const LS_KEY   = "stacks_state_v4";
 
 /* ============ STATE ============ */
-let sb=null, dirty=false, saveTimer=null, loaded=false;
-let state={ stacks:[] };
+let sb=null, user=null, dirty=false, saveTimer=null, loaded=false;
+let state={ stacks:[], archive:[] };  // archive: [{id,text,stackId,stackTitle,stackColor,ts}]
 
 const PALETTE=["#ff5c8a","#ffb84d","#5fe0a8","#4fc3f7","#a78bfa","#ff8a5c","#f06292","#7ed957"];
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,10);
 
 /* ============ PERSIST ============ */
-function loadLocal(){ try{const r=localStorage.getItem(LS_KEY); if(r)state=JSON.parse(r);}catch(e){} }
+function loadLocal(){ try{const r=localStorage.getItem(LS_KEY); if(r)state=JSON.parse(r);}catch(e){} normalize(); }
+function normalize(){ if(!state||typeof state!=="object")state={stacks:[],archive:[]}; if(!Array.isArray(state.stacks))state.stacks=[]; if(!Array.isArray(state.archive))state.archive=[]; }
 function saveLocal(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 function markDirty(){ dirty=true; saveLocal(); if(saveTimer)clearTimeout(saveTimer); saveTimer=setTimeout(pushCloud,700); }
 
 async function pushCloud(){
-  if(!sb){ setSync("local only","off"); return; }
+  if(!sb||!user){ setSync(user?"local only":"signed out","off"); return; }
   setSync("saving…","busy");
   const {error}=await sb.from(TABLE).upsert(
-    {device_id:DEVICE_ID, data:state, updated_at:new Date().toISOString()},
-    {onConflict:"device_id"}
+    {user_id:user.id, data:state, updated_at:new Date().toISOString()},
+    {onConflict:"user_id"}
   );
   if(error){ setSync("save failed","err"); console.error(error); return; }
   dirty=false; setSync("synced","on");
 }
 async function pullCloud(){
-  if(!sb)return;
+  if(!sb||!user)return;
   setSync("loading…","busy");
-  const {data,error}=await sb.from(TABLE).select("data").eq("device_id",DEVICE_ID).maybeSingle();
+  const {data,error}=await sb.from(TABLE).select("data").eq("user_id",user.id).maybeSingle();
   if(error){ setSync("load failed","err"); console.error(error); return; }
-  if(data&&data.data){ state=data.data; saveLocal(); render(); }
-  else { await pushCloud(); } // first run: create the row
+  if(data&&data.data){ state=data.data; normalize(); saveLocal(); render(); renderDrawer(); }
+  else { await pushCloud(); } // first run for this account: create the row
   loaded=true; setSync("synced","on");
 }
 function setSync(txt,cls){ $("#syncTxt").textContent=txt; const e=$("#sync"); e.className=""; if(cls&&cls!=="off")e.classList.add(cls); }
 
-/* ============ SUPABASE ============ */
+/* ============ SUPABASE / AUTH ============ */
 function initSupa(){
   if(SUPA_KEY.startsWith("REPLACE")){ setSync("local only","off"); return; }
-  try{ sb=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:false}}); pullCloud(); }
-  catch(e){ console.error(e); setSync("local only","off"); }
+  try{
+    sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+    sb.auth.getSession().then(({data})=>{ if(data.session){ user=data.session.user; afterLogin(); } else { setSync("signed out","off"); } });
+    sb.auth.onAuthStateChange((_e,s)=>{ user=s?s.user:null; });
+  }catch(e){ console.error(e); setSync("local only","off"); }
+}
+async function afterLogin(){
+  $("#acctBtn").innerHTML='<span>✓</span><span class="lbl">'+escapeHtml(user.email.split("@")[0])+'</span>';
+  await pullCloud();
+}
+function openAuth(){
+  if(user){
+    if(confirm("Sign out of "+user.email+"?")){ sb.auth.signOut(); user=null; state={stacks:[],archive:[]}; saveLocal(); render(); renderDrawer(); $("#acctBtn").innerHTML='<span>👤</span><span class="lbl">Sign in</span>'; setSync("signed out","off"); }
+    return;
+  }
+  if(!sb){ alert("Cloud sync isn't configured."); return; }
+  $("#authScrim").classList.add("show"); $("#aMsg").textContent=""; $("#aEmail").focus();
+}
+let authMode="signin";
+function setAuthMode(m){
+  authMode=m;
+  $("#aTitle").textContent=m==="signin"?"Welcome back":"Create your account";
+  $("#aGo").textContent=m==="signin"?"Sign in":"Create account";
+  $("#aSub").textContent=m==="signin"?"Sign in to load your stacks on any device.":"Pick an email and password. That's it, you're in.";
+  $("#aAlt").innerHTML=m==="signin"?'New here? <a id="aSwap">Create an account</a>':'Already have one? <a id="aSwap">Sign in</a>';
+  $("#aSwap").addEventListener("click",()=>setAuthMode(m==="signin"?"signup":"signin"));
+}
+async function doAuth(){
+  const email=$("#aEmail").value.trim(), pass=$("#aPass").value, msg=$("#aMsg"); msg.className="msg";
+  if(!email||!pass){ msg.textContent="Enter an email and password."; msg.classList.add("err"); return; }
+  if(pass.length<6){ msg.textContent="Password needs at least 6 characters."; msg.classList.add("err"); return; }
+  $("#aGo").disabled=true; msg.textContent="Working…";
+  let res; if(authMode==="signin") res=await sb.auth.signInWithPassword({email,password:pass}); else res=await sb.auth.signUp({email,password:pass});
+  $("#aGo").disabled=false;
+  if(res.error){ msg.textContent=res.error.message; msg.classList.add("err"); return; }
+  if(authMode==="signup" && !res.data.session){ msg.textContent="Account made — now sign in."; msg.classList.add("ok"); setAuthMode("signin"); return; }
+  user=res.data.user;
+  // merge: if this device has local stacks and the account is empty, keep them
+  $("#authScrim").classList.remove("show");
+  await afterLogin();
 }
 
 /* ============ RENDER ============ */
@@ -236,6 +381,15 @@ function buildSlot(s){
   if(normal.length||!urgent.length) body.appendChild(section(urgent.length?"Later":"Items",normal,s,false));
   win.appendChild(body);
 
+  const checkedCount=s.items.filter(i=>i.done).length;
+  if(checkedCount){
+    const tools=document.createElement("div");
+    tools.className="win-tools";
+    tools.innerHTML='<button class="archbtn j-archall">🗄️ Archive '+checkedCount+' checked</button>';
+    tools.querySelector(".j-archall").addEventListener("click",e=>{e.stopPropagation();archiveChecked(s);});
+    win.appendChild(tools);
+  }
+
   const add=document.createElement("div");
   add.className="win-add";
   add.innerHTML='<span class="plus">＋</span><input placeholder="Add an item…" spellcheck="false">';
@@ -260,13 +414,15 @@ function itemEl(it,s){
   el.innerHTML='<span class="box"><svg viewBox="0 0 24 24" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>'
     +'<textarea class="item-text" rows="1" placeholder="Item"></textarea>'
     +'<button class="flag" title="Flag urgent">⚑</button>'
+    +'<button class="ic arch" title="Archive">🗄️</button>'
     +'<button class="ic item-x" title="Delete">✕</button>';
   const ta=el.querySelector(".item-text");
   ta.value=it.text||"";
   requestAnimationFrame(()=>grow(ta));
   el.querySelector(".box").addEventListener("click",e=>{e.stopPropagation();toggle(it,el,s);});
-  el.addEventListener("click",e=>{ if(e.target.closest(".item-text,.flag,.item-x,.box"))return; toggle(it,el,s); });
+  el.addEventListener("click",e=>{ if(e.target.closest(".item-text,.flag,.item-x,.arch,.box"))return; toggle(it,el,s); });
   el.querySelector(".flag").addEventListener("click",e=>{e.stopPropagation();it.urgent=!it.urgent;markDirty();render();});
+  el.querySelector(".arch").addEventListener("click",e=>{e.stopPropagation();archiveItem(it,s);});
   el.querySelector(".item-x").addEventListener("click",e=>{e.stopPropagation();s.items=s.items.filter(x=>x.id!==it.id);markDirty();render();});
   ta.addEventListener("input",()=>{it.text=ta.value;grow(ta);markDirty();});
   ta.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();ta.blur();}});
@@ -334,11 +490,80 @@ function newStack(){
   if(t){ t.focus(); t.select(); t.scrollIntoView({behavior:"smooth",block:"center"}); }
 }
 
+/* ============ ARCHIVE ============ */
+function archiveItem(it,s){
+  state.archive.unshift({id:it.id,text:it.text||"",stackId:s.id,stackTitle:s.title||"Untitled stack",stackColor:s.color,ts:Date.now()});
+  s.items=s.items.filter(x=>x.id!==it.id);
+  markDirty(); render(); renderDrawer();
+}
+function archiveChecked(s){
+  const done=s.items.filter(i=>i.done);
+  if(!done.length)return;
+  done.forEach(it=>state.archive.unshift({id:it.id,text:it.text||"",stackId:s.id,stackTitle:s.title||"Untitled stack",stackColor:s.color,ts:Date.now()}));
+  s.items=s.items.filter(i=>!i.done);
+  markDirty(); render(); renderDrawer();
+}
+function restoreItem(aid){
+  const i=state.archive.findIndex(a=>a.id===aid);
+  if(i<0)return;
+  const a=state.archive[i];
+  let s=state.stacks.find(x=>x.id===a.stackId);
+  if(!s){ // original stack was deleted — recreate it
+    s={id:a.stackId,title:a.stackTitle||"Restored",color:a.stackColor||PALETTE[0],collapsed:false,items:[]};
+    state.stacks.push(s);
+  }
+  s.items.push({id:a.id,text:a.text,done:false,urgent:false}); // comes back unchecked
+  state.archive.splice(i,1);
+  markDirty(); render(); renderDrawer();
+}
+function deleteArchived(aid){ state.archive=state.archive.filter(a=>a.id!==aid); markDirty(); render(); renderDrawer(); }
+function clearArchive(){ if(state.archive.length&&confirm("Permanently delete all archived items?")){ state.archive=[]; markDirty(); render(); renderDrawer(); } }
+
+function renderDrawer(){
+  const n=state.archive.length;
+  $("#archPill").textContent=n; $("#drawCount").textContent=n;
+  const body=$("#drawBody");
+  if(!n){ body.innerHTML='<div class="draw-empty">Nothing archived yet.<br>Check things off, then archive them to tuck them away here.</div>'; return; }
+  // group by stack
+  const groups={};
+  state.archive.forEach(a=>{ (groups[a.stackId]=groups[a.stackId]||{title:a.stackTitle,color:a.stackColor,items:[]}).items.push(a); });
+  body.innerHTML="";
+  Object.values(groups).forEach(g=>{
+    const wrap=document.createElement("div"); wrap.className="arch-group";
+    wrap.innerHTML='<div class="arch-group-label"><span class="dot" style="background:'+(g.color||"#888")+'"></span>'+escapeHtml(g.title||"Untitled stack")+'</div>';
+    g.items.forEach(a=>{
+      const row=document.createElement("div"); row.className="arch-row";
+      row.innerHTML='<span class="txt"></span>'
+        +'<button class="restore">↩ Restore</button>'
+        +'<button class="del" title="Delete forever">🗑</button>';
+      row.querySelector(".txt").textContent=a.text||"(empty)";
+      row.querySelector(".restore").addEventListener("click",()=>restoreItem(a.id));
+      row.querySelector(".del").addEventListener("click",()=>deleteArchived(a.id));
+      wrap.appendChild(row);
+    });
+    body.appendChild(wrap);
+  });
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function openDrawer(){ renderDrawer(); $("#drawer-scrim").classList.add("show"); $("#drawer").classList.add("show"); }
+function closeDrawer(){ $("#drawer-scrim").classList.remove("show"); $("#drawer").classList.remove("show"); }
+
 /* ============ BOOT ============ */
 $("#addBtn").addEventListener("click",newStack);
 $("#refresh").addEventListener("click",()=>pullCloud());
+$("#openArch").addEventListener("click",openDrawer);
+$("#drawClose").addEventListener("click",closeDrawer);
+$("#drawer-scrim").addEventListener("click",closeDrawer);
+$("#drawClear").addEventListener("click",clearArchive);
+$("#acctBtn").addEventListener("click",openAuth);
+$("#aCancel").addEventListener("click",()=>$("#authScrim").classList.remove("show"));
+$("#aGo").addEventListener("click",doAuth);
+$("#aPass").addEventListener("keydown",e=>{if(e.key==="Enter")doAuth();});
+$("#authScrim").addEventListener("mousedown",e=>{if(e.target.id==="authScrim")$("#authScrim").classList.remove("show");});
 
-loadLocal(); render(); initSupa();
+setAuthMode("signin");
+loadLocal(); render(); renderDrawer(); initSupa();
 </script>
 </body>
 </html>
