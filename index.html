@@ -103,7 +103,9 @@
   .item-x:hover{opacity:1;}
 
   .win-add{display:flex;align-items:center;border-top:1px solid var(--line-soft);background:rgba(0,0,0,.18);}
-  .win-add .plus{padding:0 4px 0 15px;color:var(--c);font-size:18px;font-weight:700;}
+  .win-add .plus{border:none;background:none;padding:0 6px 0 15px;color:var(--c);font-size:20px;font-weight:700;cursor:pointer;line-height:1;align-self:stretch;display:flex;align-items:center;transition:transform .1s,opacity .12s;}
+  .win-add .plus:hover{transform:scale(1.18);}
+  .win-add .plus:active{transform:scale(.9);}
   .win-add input{flex:1;border:none;background:none;font:inherit;font-size:13.5px;padding:13px 14px 13px 6px;color:var(--text);}
   .win-add input:focus{outline:none;}
   .win-add input::placeholder{color:var(--text-dim);}
@@ -161,6 +163,16 @@
   .draw-body{overflow-y:auto;padding:8px 14px 26px;}
   .draw-body::-webkit-scrollbar{width:9px;}
   .draw-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px;}
+  .arch-section-label{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);margin:14px 6px 8px;}
+  .arch-stack-row{display:flex;align-items:center;gap:11px;padding:12px;border-radius:12px;background:rgba(255,255,255,.04);margin:0 4px 7px;border:1px solid var(--line-soft);}
+  .arch-stack-row .sdot{width:14px;height:14px;border-radius:5px;flex:0 0 auto;}
+  .arch-stack-row .stxt{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .arch-stack-row .sname{font-size:14.5px;font-weight:700;color:var(--text);word-break:break-word;}
+  .arch-stack-row .smeta{font-size:11px;color:var(--text-dim);font-weight:600;}
+  .arch-stack-row .restore{border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:7px 12px;border-radius:9px;flex:0 0 auto;transition:.12s;}
+  .arch-stack-row .restore:hover{border-color:var(--done);color:var(--done);}
+  .arch-stack-row .del{border:none;background:none;color:var(--text-dim);cursor:pointer;font-size:13px;width:26px;height:26px;border-radius:8px;flex:0 0 auto;}
+  .arch-stack-row .del:hover{color:var(--urgent);background:rgba(255,92,92,.08);}
   .arch-group{margin:10px 4px 4px;}
   .arch-group-label{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);display:flex;align-items:center;gap:8px;margin-bottom:5px;padding-left:4px;}
   .arch-group-label .dot{width:9px;height:9px;border-radius:3px;}
@@ -264,7 +276,7 @@ const LS_KEY   = "stacks_state_v4";
 
 /* ============ STATE ============ */
 let sb=null, user=null, dirty=false, saveTimer=null, loaded=false;
-let state={ stacks:[], archive:[] };  // archive: [{id,text,stackId,stackTitle,stackColor,ts}]
+let state={ stacks:[], archive:[], archivedStacks:[] };  // archive: loose items; archivedStacks: whole stacks
 
 const PALETTE=["#ff5c8a","#ffb84d","#5fe0a8","#4fc3f7","#a78bfa","#ff8a5c","#f06292","#7ed957"];
 const $=s=>document.querySelector(s);
@@ -272,7 +284,7 @@ const uid=()=>Math.random().toString(36).slice(2,10);
 
 /* ============ PERSIST ============ */
 function loadLocal(){ try{const r=localStorage.getItem(LS_KEY); if(r)state=JSON.parse(r);}catch(e){} normalize(); }
-function normalize(){ if(!state||typeof state!=="object")state={stacks:[],archive:[]}; if(!Array.isArray(state.stacks))state.stacks=[]; if(!Array.isArray(state.archive))state.archive=[]; }
+function normalize(){ if(!state||typeof state!=="object")state={stacks:[],archive:[],archivedStacks:[]}; if(!Array.isArray(state.stacks))state.stacks=[]; if(!Array.isArray(state.archive))state.archive=[]; if(!Array.isArray(state.archivedStacks))state.archivedStacks=[]; }
 function saveLocal(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 function markDirty(){ dirty=true; saveLocal(); if(saveTimer)clearTimeout(saveTimer); saveTimer=setTimeout(pushCloud,700); }
 
@@ -312,7 +324,7 @@ async function afterLogin(){
 }
 function openAuth(){
   if(user){
-    if(confirm("Sign out of "+user.email+"?")){ sb.auth.signOut(); user=null; state={stacks:[],archive:[]}; saveLocal(); render(); renderDrawer(); $("#acctBtn").innerHTML='<span>👤</span><span class="lbl">Sign in</span>'; setSync("signed out","off"); }
+    if(confirm("Sign out of "+user.email+"?")){ sb.auth.signOut(); user=null; state={stacks:[],archive:[],archivedStacks:[]}; saveLocal(); render(); renderDrawer(); $("#acctBtn").innerHTML='<span>👤</span><span class="lbl">Sign in</span>'; setSync("signed out","off"); }
     return;
   }
   if(!sb){ alert("Cloud sync isn't configured."); return; }
@@ -370,6 +382,7 @@ function buildSlot(s){
     +'<input class="win-title" spellcheck="false">'
     +'<span class="win-count">'+done+'/'+total+'</span>'
     +'<button class="ic j-col" title="Collapse">'+(s.collapsed?"▸":"▾")+'</button>'
+    +'<button class="ic j-archstack" title="Archive whole stack">🗄️</button>'
     +'<button class="ic j-del" title="Delete stack">✕</button>';
   head.querySelector(".win-title").value=s.title;
   win.appendChild(head);
@@ -392,7 +405,7 @@ function buildSlot(s){
 
   const add=document.createElement("div");
   add.className="win-add";
-  add.innerHTML='<span class="plus">＋</span><input placeholder="Add an item…" spellcheck="false">';
+  add.innerHTML='<button class="plus" title="Add item">＋</button><input placeholder="Add an item…" spellcheck="false">';
   win.appendChild(add);
 
   slot.appendChild(win);
@@ -439,11 +452,14 @@ function wire(slot,win,s,head,body,add){
   title.addEventListener("mousedown",e=>e.stopPropagation());
   head.querySelector(".swatch").addEventListener("click",e=>{e.stopPropagation();colorMenu(e.currentTarget,s);});
   head.querySelector(".j-col").addEventListener("click",e=>{e.stopPropagation();s.collapsed=!s.collapsed;markDirty();render();});
-  head.querySelector(".j-del").addEventListener("click",e=>{e.stopPropagation();if(confirm('Delete "'+(s.title||"this stack")+'"?')){state.stacks=state.stacks.filter(x=>x.id!==s.id);markDirty();render();}});
+  head.querySelector(".j-archstack").addEventListener("click",e=>{e.stopPropagation();archiveStack(s);});
+  head.querySelector(".j-del").addEventListener("click",e=>{e.stopPropagation();if(confirm('Delete "'+(s.title||"this stack")+'"? This can\'t be undone.')){state.stacks=state.stacks.filter(x=>x.id!==s.id);markDirty();render();}});
 
   const inp=add.querySelector("input");
-  const commit=()=>{const v=inp.value.trim();if(v){s.items.push({id:uid(),text:v,done:false,urgent:false});inp.value="";markDirty();render();const w=grid.querySelector('.slot[data-id="'+s.id+'"] .win-add input');if(w)w.focus();}};
+  const commit=()=>{const v=inp.value.trim();if(v){s.items.push({id:uid(),text:v,done:false,urgent:false});inp.value="";markDirty();render();const w=grid.querySelector('.slot[data-id="'+s.id+'"] .win-add input');if(w)w.focus();}else{inp.focus();}};
   inp.addEventListener("keydown",e=>{if(e.key==="Enter")commit();});
+  add.querySelector(".plus").addEventListener("click",e=>{e.stopPropagation();commit();});
+  add.querySelector(".plus").addEventListener("mousedown",e=>e.stopPropagation());
   add.addEventListener("mousedown",e=>e.stopPropagation());
 
   enableDragReorder(slot,head,s);
@@ -517,32 +533,83 @@ function restoreItem(aid){
   markDirty(); render(); renderDrawer();
 }
 function deleteArchived(aid){ state.archive=state.archive.filter(a=>a.id!==aid); markDirty(); render(); renderDrawer(); }
-function clearArchive(){ if(state.archive.length&&confirm("Permanently delete all archived items?")){ state.archive=[]; markDirty(); render(); renderDrawer(); } }
+
+/* whole-stack archive */
+function archiveStack(s){
+  const i=state.stacks.findIndex(x=>x.id===s.id);
+  if(i<0)return;
+  const [st]=state.stacks.splice(i,1);
+  st._archivedTs=Date.now();
+  state.archivedStacks.unshift(st);
+  markDirty(); render(); renderDrawer();
+}
+function restoreStack(sid){
+  const i=state.archivedStacks.findIndex(x=>x.id===sid);
+  if(i<0)return;
+  const [st]=state.archivedStacks.splice(i,1);
+  delete st._archivedTs;
+  state.stacks.push(st); // restored intact, with items and checked states
+  markDirty(); render(); renderDrawer();
+}
+function deleteArchivedStack(sid){
+  const st=state.archivedStacks.find(x=>x.id===sid);
+  if(st&&confirm('Permanently delete "'+(st.title||"this stack")+'" and everything in it?')){
+    state.archivedStacks=state.archivedStacks.filter(x=>x.id!==sid);
+    markDirty(); render(); renderDrawer();
+  }
+}
+function clearArchive(){
+  const total=state.archive.length+state.archivedStacks.length;
+  if(total&&confirm("Permanently delete everything in the archive?")){ state.archive=[]; state.archivedStacks=[]; markDirty(); render(); renderDrawer(); }
+}
 
 function renderDrawer(){
-  const n=state.archive.length;
+  const nItems=state.archive.length, nStacks=state.archivedStacks.length, n=nItems+nStacks;
   $("#archPill").textContent=n; $("#drawCount").textContent=n;
   const body=$("#drawBody");
-  if(!n){ body.innerHTML='<div class="draw-empty">Nothing archived yet.<br>Check things off, then archive them to tuck them away here.</div>'; return; }
-  // group by stack
-  const groups={};
-  state.archive.forEach(a=>{ (groups[a.stackId]=groups[a.stackId]||{title:a.stackTitle,color:a.stackColor,items:[]}).items.push(a); });
+  if(!n){ body.innerHTML='<div class="draw-empty">Nothing archived yet.<br>Archive whole stacks from the 🗄️ in their header, or archive checked-off items.</div>'; return; }
   body.innerHTML="";
-  Object.values(groups).forEach(g=>{
-    const wrap=document.createElement("div"); wrap.className="arch-group";
-    wrap.innerHTML='<div class="arch-group-label"><span class="dot" style="background:'+(g.color||"#888")+'"></span>'+escapeHtml(g.title||"Untitled stack")+'</div>';
-    g.items.forEach(a=>{
-      const row=document.createElement("div"); row.className="arch-row";
-      row.innerHTML='<span class="txt"></span>'
-        +'<button class="restore">↩ Restore</button>'
+
+  // archived whole stacks first
+  if(nStacks){
+    const lbl=document.createElement("div"); lbl.className="arch-section-label"; lbl.textContent="Archived stacks";
+    body.appendChild(lbl);
+    state.archivedStacks.forEach(st=>{
+      const t=st.items?st.items.length:0, d=st.items?st.items.filter(i=>i.done).length:0;
+      const row=document.createElement("div"); row.className="arch-stack-row";
+      row.innerHTML='<span class="sdot" style="background:'+(st.color||"#888")+'"></span>'
+        +'<span class="stxt"><span class="sname"></span><span class="smeta">'+d+'/'+t+' done</span></span>'
+        +'<button class="restore">↩ Restore stack</button>'
         +'<button class="del" title="Delete forever">🗑</button>';
-      row.querySelector(".txt").textContent=a.text||"(empty)";
-      row.querySelector(".restore").addEventListener("click",()=>restoreItem(a.id));
-      row.querySelector(".del").addEventListener("click",()=>deleteArchived(a.id));
-      wrap.appendChild(row);
+      row.querySelector(".sname").textContent=st.title||"Untitled stack";
+      row.querySelector(".restore").addEventListener("click",()=>restoreStack(st.id));
+      row.querySelector(".del").addEventListener("click",()=>deleteArchivedStack(st.id));
+      body.appendChild(row);
     });
-    body.appendChild(wrap);
-  });
+  }
+
+  // archived loose items, grouped by their origin stack
+  if(nItems){
+    const lbl=document.createElement("div"); lbl.className="arch-section-label"; lbl.textContent="Archived items";
+    body.appendChild(lbl);
+    const groups={};
+    state.archive.forEach(a=>{ (groups[a.stackId]=groups[a.stackId]||{title:a.stackTitle,color:a.stackColor,items:[]}).items.push(a); });
+    Object.values(groups).forEach(g=>{
+      const wrap=document.createElement("div"); wrap.className="arch-group";
+      wrap.innerHTML='<div class="arch-group-label"><span class="dot" style="background:'+(g.color||"#888")+'"></span>'+escapeHtml(g.title||"Untitled stack")+'</div>';
+      g.items.forEach(a=>{
+        const row=document.createElement("div"); row.className="arch-row";
+        row.innerHTML='<span class="txt"></span>'
+          +'<button class="restore">↩ Restore</button>'
+          +'<button class="del" title="Delete forever">🗑</button>';
+        row.querySelector(".txt").textContent=a.text||"(empty)";
+        row.querySelector(".restore").addEventListener("click",()=>restoreItem(a.id));
+        row.querySelector(".del").addEventListener("click",()=>deleteArchived(a.id));
+        wrap.appendChild(row);
+      });
+      body.appendChild(wrap);
+    });
+  }
 }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
