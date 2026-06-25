@@ -446,6 +446,8 @@ function itemEl(it,s){
   ta.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();ta.blur();}});
 
   // press-and-hold to drag item to another list (works on mouse + touch)
+  el.draggable=false;
+  el.addEventListener("dragstart",e=>{ e.preventDefault(); e.stopPropagation(); }); // block native drag from items
   el.addEventListener("pointerdown",e=>{ if(e.target.closest(".item-text,.flag,.item-x,.arch,.box"))return; beginItemDrag(e,it,s,el); });
   return el;
 }
@@ -567,10 +569,14 @@ function moveItem(itemId,fromId,toId){
 
 let dragId=null;
 function enableDragReorder(slot,head,s){
-  head.addEventListener("mousedown",e=>{ if(e.target.closest("input,button,.swatch"))return; slot.draggable=true; });
-  head.addEventListener("touchstart",()=>{ slot.draggable=true; },{passive:true});
-  slot.addEventListener("dragstart",e=>{ dragId=s.id; slot.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; try{e.dataTransfer.setData("text/plain",s.id);}catch(_){} });
-  slot.addEventListener("dragend",()=>{ slot.classList.remove("dragging"); slot.draggable=false; dragId=null; grid.querySelectorAll(".drop-target").forEach(x=>x.classList.remove("drop-target")); });
+  let armed=false; // true only when pointerdown happened on the header
+  head.addEventListener("mousedown",e=>{ if(e.target.closest("input,button,.swatch"))return; armed=true; slot.draggable=true; });
+  head.addEventListener("touchstart",()=>{ armed=true; slot.draggable=true; },{passive:true});
+  // pressing anywhere that's NOT the header disarms stack-dragging (so items can drag instead)
+  slot.addEventListener("mousedown",e=>{ if(!e.target.closest(".win-head")){ armed=false; slot.draggable=false; } });
+  slot.addEventListener("touchstart",e=>{ if(!e.target.closest(".win-head")){ armed=false; slot.draggable=false; } },{passive:true});
+  slot.addEventListener("dragstart",e=>{ if(!armed){ e.preventDefault(); return; } dragId=s.id; slot.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; try{e.dataTransfer.setData("text/plain",s.id);}catch(_){} });
+  slot.addEventListener("dragend",()=>{ slot.classList.remove("dragging"); slot.draggable=false; armed=false; dragId=null; grid.querySelectorAll(".drop-target").forEach(x=>x.classList.remove("drop-target")); });
   slot.addEventListener("dragover",e=>{ if(!dragId||dragId===s.id)return; e.preventDefault(); slot.classList.add("drop-target"); });
   slot.addEventListener("dragleave",()=>slot.classList.remove("drop-target"));
   slot.addEventListener("drop",e=>{ e.preventDefault(); slot.classList.remove("drop-target"); reorder(dragId,s.id); });
